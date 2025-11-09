@@ -1,9 +1,7 @@
 package com.llamalad7.betterchat;
 
 import com.llamalad7.betterchat.command.CommandConfig;
-import com.llamalad7.betterchat.handlers.InjectHandler;
 import net.minecraftforge.client.ClientCommandHandler;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -12,14 +10,15 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@Mod(modid = BetterChat.MODID, name = BetterChat.NAME, version = BetterChat.VERSION)
+@Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION, clientSideOnly = true, acceptableSaveVersions = "*",
+        dependencies = "required-after:mixinbooter@[8.0,)", guiFactory = "com.llamalad7.betterchat.BetterChatConfigGuiFactory"
+)
 @SideOnly(Side.CLIENT)
-public class BetterChat
-{
-    public static final String MODID = "betterchat";
-    public static final String NAME = "Better Chat";
-    public static final String VERSION = "1.5";
+public class BetterChat {
     private static ChatSettings settings;
+    public static float percentComplete = 0.0F;
+    public static int newLines;
+    public static long prevMillis = -1;
 
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -28,11 +27,10 @@ public class BetterChat
     }
 
     @EventHandler
-    public void init(FMLInitializationEvent event)
-    {
-        MinecraftForge.EVENT_BUS.register(new InjectHandler());
+    public void init(FMLInitializationEvent event) {
         ClientCommandHandler.instance.registerCommand(new CommandConfig());
     }
+
     public static ChatSettings getSettings() {
         return settings;
     }

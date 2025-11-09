@@ -6,7 +6,7 @@ import net.minecraftforge.common.config.Property;
 
 
 public class ChatSettings {
-    private Configuration config;
+    private final Configuration config;
     public boolean smooth;
     public boolean clear;
     public int xOffset;

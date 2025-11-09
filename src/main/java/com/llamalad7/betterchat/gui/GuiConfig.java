@@ -2,109 +2,86 @@ package com.llamalad7.betterchat.gui;
 
 import com.llamalad7.betterchat.BetterChat;
 import com.llamalad7.betterchat.ChatSettings;
-import com.llamalad7.betterchat.handlers.InjectHandler;
+import com.llamalad7.betterchat.mixininterface.GuiNewChatConfigurer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.World;
 import net.minecraftforge.fml.client.config.GuiSlider;
+import org.lwjgl.input.Mouse;
 
-import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static net.minecraft.client.gui.GuiNewChat.calculateChatboxWidth;
-
-public class GuiConfig extends GuiScreen {
-    private ChatSettings settings;
-    private List<ITextComponent> exampleChat = new ArrayList<>();
+public class GuiConfig extends GuiScreen implements GuiSlider.ISlider {
+    private static final List<ITextComponent> EXAMPLE_CHAT = new ArrayList<>();
+    private final ChatSettings settings;
     private boolean dragging = false;
-    private int chatLeft, chatRight, chatTop, chatBottom, dragStartX, dragStartY;
+    private int dragStartX, dragStartY;
+    private GuiNewChat dummyChatGUI;
     private GuiButton clearButton, smoothButton;
     private GuiSlider scaleSlider, widthSlider;
 
-
+    static {
+        EXAMPLE_CHAT.add(new TextComponentTranslation("gui.betterchat.text.example3"));
+        EXAMPLE_CHAT.add(new TextComponentTranslation("gui.betterchat.text.example2"));
+        EXAMPLE_CHAT.add(new TextComponentTranslation("gui.betterchat.text.example1"));
+    }
 
     public GuiConfig() {
         this.settings = BetterChat.getSettings();
-        exampleChat.add(new TextComponentString(I18n.format("gui.betterchat.text.example3")));
-        exampleChat.add(new TextComponentString(I18n.format("gui.betterchat.text.example2")));
-        exampleChat.add(new TextComponentString(I18n.format("gui.betterchat.text.example1")));
     }
 
     @Override
     public void initGui() {
-        InjectHandler.chatGUI.configuring = true;
-        buttonList.add(clearButton = new GuiButton(0, width / 2 - 120, height / 2 - 50, 240, 20, getPropName("clear") + " " + getColoredBool("clear", settings.clear)));
-        buttonList.add(smoothButton = new GuiButton(1, width / 2 - 120, height / 2 - 25, 240, 20, getPropName("smooth") + " " + getColoredBool("smooth", settings.smooth)));
-        buttonList.add(scaleSlider = new GuiSlider(3, width / 2 - 120, height / 2, 240, 20, getPropName("scale") + " ", "%", 0, 100, this.mc.gameSettings.chatScale*100, false, true));
-        buttonList.add(widthSlider = new GuiSlider(4, width / 2 - 120, height / 2 + 25, 240, 20, getPropName("width") + " ", "px", 40, 320, calculateChatboxWidth(this.mc.gameSettings.chatWidth), false, true));
-        buttonList.add(new GuiButton(2, width / 2 - 120, height / 2 + 50, 240, 20, getPropName("reset")));
+        final GuiIngame ingame = Minecraft.getMinecraft().ingameGUI;
+        if (ingame != null) {
+            ((GuiNewChatConfigurer) ingame.getChatGUI()).betterChat$setConfiguring(true);
+        }
+        this.dummyChatGUI = new GuiNewChat(this.mc);
+        ((GuiNewChatConfigurer) this.dummyChatGUI).betterChat$setExampleChatLines(EXAMPLE_CHAT);
+        clearButton = addButton(new GuiButton(0, width / 2 - 120, height / 2 - 50, 240, 20, getPropName("clear") + " " + getColoredBool("clear", settings.clear)));
+        smoothButton = addButton(new GuiButton(1, width / 2 - 120, height / 2 - 25, 240, 20, getPropName("smooth") + " " + getColoredBool("smooth", settings.smooth)));
+        scaleSlider = addButton(new GuiSlider(3, width / 2 - 120, height / 2, 240, 20, getPropName("scale") + " ", "%", 0, 100, this.mc.gameSettings.chatScale * 100, false, true, this));
+        widthSlider = addButton(new GuiSlider(4, width / 2 - 120, height / 2 + 25, 240, 20, getPropName("width") + " ", "px", 40, 320, GuiNewChat.calculateChatboxWidth(this.mc.gameSettings.chatWidth), false, true, this));
+        addButton(new GuiButton(2, width / 2 - 120, height / 2 + 50, 240, 20, getPropName("reset")));
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
-        //drawDefaultBackground();
+        drawDefaultBackground();
         super.drawScreen(mouseX, mouseY, partialTicks);
-        drawCenteredString(mc.fontRenderer, I18n.format("gui.betterchat.text.title", TextFormatting.GREEN + TextFormatting.BOLD.toString() + "Better Chat" + TextFormatting.RESET, TextFormatting.AQUA + TextFormatting.BOLD.toString() + "LlamaLad7"), width / 2, height / 2 - 75, 0xFFFFFF);
-        drawCenteredString(mc.fontRenderer, I18n.format("gui.betterchat.text.drag"), width / 2, height / 2 - 63, 0xFFFFFF);
+        drawCenteredString(this.mc.fontRenderer, I18n.format("gui.betterchat.text.title", TextFormatting.GREEN + TextFormatting.BOLD.toString() + "Better Chat" + TextFormatting.RESET, TextFormatting.AQUA + TextFormatting.BOLD.toString() + "LlamaLad7"), width / 2, height / 2 - 75, 0xFFFFFF);
+        drawCenteredString(this.mc.fontRenderer, I18n.format("gui.betterchat.text.drag"), this.width / 2, this.height / 2 - 63, 0xFFFFFF);
         if (dragging) {
             settings.xOffset += mouseX - dragStartX;
             settings.yOffset += mouseY - dragStartY;
             dragStartX = mouseX;
             dragStartY = mouseY;
         }
-        this.mc.gameSettings.chatScale = (float) scaleSlider.getValueInt()/100;
-        this.mc.gameSettings.chatWidth = ((float) widthSlider.getValueInt()-40)/280;
-        drawExampleChat();
-    }
+        this.mc.gameSettings.chatScale = (float) scaleSlider.getValueInt() / 100;
+        this.mc.gameSettings.chatWidth = ((float) widthSlider.getValueInt() - 40) / 280;
 
-    public void drawExampleChat() {
-        List<ITextComponent> lines = new ArrayList<>();
-        int i = MathHelper.floor((float) InjectHandler.chatGUI.getChatWidth() / InjectHandler.chatGUI.getChatScale());
-        for (ITextComponent line : exampleChat) {
-            lines.addAll(GuiUtilRenderComponents.splitText(line, i, this.mc.fontRenderer, false, false));
-        }
-        Collections.reverse(lines);
         GlStateManager.pushMatrix();
         ScaledResolution scaledresolution = new ScaledResolution(this.mc);
-        GlStateManager.translate(2.0F + settings.xOffset, 8.0F + settings.yOffset + scaledresolution.getScaledHeight() - 48, 0.0F);
-        float f = this.mc.gameSettings.chatOpacity * 0.9F + 0.1F;
-        float f1 = this.mc.gameSettings.chatScale;
-        int k = MathHelper.ceil(InjectHandler.chatGUI.getChatWidth() / f1);
-        GlStateManager.scale(f1, f1, 1.0F);
-        int i1 = 0;
-        double d0 = 1.0D;
-        int l1 = (int)(255.0D * d0);
-        l1 = (int)((float)l1 * f);
-        GlStateManager.enableAlpha();
-        GlStateManager.enableBlend();
-        chatLeft = settings.xOffset;
-        chatRight = (int) (settings.xOffset + (k+4)*f1);
-        chatBottom = 8 + settings.yOffset + scaledresolution.getScaledHeight() - 48;
-        for (ITextComponent message : lines) {
-            int j2 = -i1 * 9;
-            if (!settings.clear) drawRect(-2, j2 - 9, k + 4, j2, l1 / 2 << 24);
-            this.mc.fontRenderer.drawStringWithShadow(message.getFormattedText(), 0.0F, (float)(j2 - 8), 16777215 + (l1 << 24));
-            ++i1;
-        }
-        chatTop = (int) (8 + settings.yOffset + scaledresolution.getScaledHeight() - 48 + (-i1*9)*f1);
-        GlStateManager.disableAlpha();
-        GlStateManager.disableBlend();
+        GlStateManager.translate(0.0F, (float) (scaledresolution.getScaledHeight() - 48), 0.0F);
+        this.dummyChatGUI.drawChat(0);
         GlStateManager.popMatrix();
     }
+
     @Override
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
         if (mouseButton == 0) {
-            if (mouseX >= chatLeft && mouseX <= chatRight && mouseY >= chatTop && mouseY <= chatBottom) {
+            int left = settings.xOffset;
+            int right = left + this.dummyChatGUI.getChatWidth() + 4;
+            int bottom = 8 + settings.yOffset + new ScaledResolution(this.mc).getScaledHeight() - 48;
+            int top = bottom - EXAMPLE_CHAT.size() * 9;
+            if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
                 dragging = true;
                 dragStartX = mouseX;
                 dragStartY = mouseY;
@@ -112,6 +89,7 @@ public class GuiConfig extends GuiScreen {
         }
 
     }
+
     @Override
     public void mouseReleased(int mouseX, int mouseY, int mouseButton) {
         super.mouseReleased(mouseX, mouseY, mouseButton);
@@ -121,12 +99,15 @@ public class GuiConfig extends GuiScreen {
     @Override
     public void onGuiClosed() {
         settings.saveConfig();
-        InjectHandler.chatGUI.configuring = false;
+        final GuiIngame ingame = Minecraft.getMinecraft().ingameGUI;
+        if (ingame != null) {
+            ((GuiNewChatConfigurer) ingame.getChatGUI()).betterChat$setConfiguring(false);
+        }
         this.mc.gameSettings.saveOptions();
     }
 
     @Override
-    protected void actionPerformed(GuiButton button) throws IOException {
+    protected void actionPerformed(GuiButton button) {
         switch (button.id) {
             case 0:
                 settings.clear = !settings.clear;
@@ -140,13 +121,22 @@ public class GuiConfig extends GuiScreen {
                 settings.resetConfig();
                 clearButton.displayString = getPropName("clear") + " " + getColoredBool("clear", settings.clear);
                 smoothButton.displayString = getPropName("smooth") + " " + getColoredBool("smooth", settings.smooth);
-//                this.mc.gameSettings.chatScale = 1.0f;
-//                this.mc.gameSettings.chatWidth = 1.0f;
-                scaleSlider.setValue(this.mc.gameSettings.chatScale*100);
+                scaleSlider.setValue(this.mc.gameSettings.chatScale * 100);
                 scaleSlider.updateSlider();
-                widthSlider.setValue(calculateChatboxWidth(this.mc.gameSettings.chatWidth));
+                widthSlider.setValue(GuiNewChat.calculateChatboxWidth(this.mc.gameSettings.chatWidth));
                 widthSlider.updateSlider();
         }
+    }
+
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        this.dummyChatGUI.scroll(Mouse.getEventDWheel());
+    }
+
+    @Override
+    public void onChangeSliderValue(GuiSlider slider) {
+        this.dummyChatGUI.refreshChat();
     }
 
     @Override
@@ -161,7 +151,15 @@ public class GuiConfig extends GuiScreen {
 
         return TextFormatting.RED + I18n.format("gui.betterchat.text." + prop + ".disabled");
     }
+
     private String getPropName(String prop) {
         return I18n.format("gui.betterchat.text." + prop + ".name");
+    }
+
+    @Override
+    public void drawWorldBackground(int tint) {
+        if (this.mc.world == null) {
+            this.drawBackground(tint);
+        }
     }
 }

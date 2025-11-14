@@ -9,4 +9,6 @@ public interface GuiNewChatConfigurer {
     void betterChat$setConfiguring(boolean configuring);
 
     void betterChat$setExampleChatLines(@Nonnull List<ITextComponent> exampleChatLines);
+
+    int betterChat$getCurrentChatHeight();
 }

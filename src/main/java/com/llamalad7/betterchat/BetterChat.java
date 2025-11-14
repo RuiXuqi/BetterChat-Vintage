@@ -1,6 +1,7 @@
 package com.llamalad7.betterchat;
 
 import com.llamalad7.betterchat.command.CommandConfig;
+import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.common.Mod;
@@ -15,6 +16,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 )
 @SideOnly(Side.CLIENT)
 public class BetterChat {
+    //public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
+    public static NetworkPlayerInfo lastSender;
+    public static final int HEAD_OFFSET = 10;
+
     private static ChatSettings settings;
     public static float percentComplete = 0.0F;
     public static int newLines;

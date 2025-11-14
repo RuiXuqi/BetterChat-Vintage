@@ -9,6 +9,7 @@ public class ChatSettings {
     private final Configuration config;
     public boolean smooth;
     public boolean clear;
+    public boolean head;
     public int xOffset;
     public int yOffset;
 
@@ -35,6 +36,9 @@ public class ChatSettings {
         prop = config.get("All", "Smooth", true);
         prop.set(smooth = true);
 
+        prop = config.get("All", "Head", true);
+        prop.set(head = true);
+
         prop = config.get("All", "xOffset", 0);
         prop.set(xOffset = 0);
 
@@ -55,6 +59,10 @@ public class ChatSettings {
         prop = config.get("All", "Smooth", true);
         if (load) smooth = prop.getBoolean();
         else prop.set(smooth);
+
+        prop = config.get("All", "Head", true);
+        if (load) head = prop.getBoolean();
+        else prop.set(head);
 
         prop = config.get("All", "xOffset", 0);
         if (load) xOffset = prop.getInt();

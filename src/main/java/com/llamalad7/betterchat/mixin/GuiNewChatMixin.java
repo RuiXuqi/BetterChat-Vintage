@@ -1,16 +1,26 @@
 package com.llamalad7.betterchat.mixin;
 
 import com.llamalad7.betterchat.BetterChat;
+import com.llamalad7.betterchat.ChatSettings;
+import com.llamalad7.betterchat.mixininterface.ChatLineAccessor;
 import com.llamalad7.betterchat.mixininterface.GuiNewChatConfigurer;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.ChatLine;
-import net.minecraft.client.gui.GuiNewChat;
+import net.minecraft.client.gui.*;
+import net.minecraft.client.network.NetworkPlayerInfo;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
@@ -29,6 +39,10 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
 
     @Shadow
     protected abstract void setChatLine(ITextComponent chatComponent, int chatLineId, int updateCounter, boolean displayOnly);
+
+    @Shadow
+    @Final
+    private Minecraft mc;
 
     @Unique
     private boolean betterChat$configuring;
@@ -101,6 +115,7 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
             //noinspection UnusedAssignment
             l1 = (int) (l1 * this.betterChat$percent);
         }
+        this.betterChat$lineCount = l;
     }
 
     @Redirect(
@@ -138,27 +153,72 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
         BetterChat.newLines = list.size() - 1;
     }
 
-    @ModifyVariable(
-            method = "getChatComponent",
-            at = @At("STORE"),
-            ordinal = 0,
-            argsOnly = true)
-    private int modifyMouseX(int x) {
-        return x - BetterChat.getSettings().xOffset;
-    }
-
-    @ModifyVariable(method = "getChatComponent",
-            at = @At("STORE"),
-            ordinal = 1,
-            argsOnly = true)
-    private int modifyMouseY(int y) {
-        return y + BetterChat.getSettings().yOffset;
+    @WrapMethod(method = "getChatComponent")
+    private ITextComponent modifyMousePos(int mouseX, int mouseY, @Nonnull Operation<ITextComponent> original) {
+        ScaledResolution scaledresolution = new ScaledResolution(this.mc);
+        int i = scaledresolution.getScaleFactor();
+        ChatSettings settings = BetterChat.getSettings();
+        return original.call(mouseX - (settings.xOffset + (settings.head ? BetterChat.HEAD_OFFSET : 0)) * i, mouseY + settings.yOffset * i);
     }
 
     @Override
+    @Unique
     public void betterChat$setExampleChatLines(@Nonnull List<ITextComponent> exampleChatLines) {
         for (ITextComponent chatComponent : exampleChatLines) {
             this.setChatLine(chatComponent, 0, 0, false);
         }
+    }
+
+    @Unique
+    private int betterChat$lineCount = 0;
+
+    @Override
+    @Unique
+    public int betterChat$getCurrentChatHeight() {
+        return this.betterChat$lineCount;
+    }
+
+    @Unique
+    private ChatLine betterChat$drawingLine;
+
+    @WrapOperation(
+            method = "drawChat",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/ChatLine;getChatComponent()Lnet/minecraft/util/text/ITextComponent;",
+                    ordinal = 0
+            )
+    )
+    private ITextComponent getMessage(ChatLine instance, @Nonnull Operation<ITextComponent> original) {
+        this.betterChat$drawingLine = instance;
+        return original.call(instance);
+    }
+
+    @WrapOperation(
+            method = "drawChat",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/FontRenderer;drawStringWithShadow(Ljava/lang/String;FFI)I",
+                    ordinal = 0
+            )
+    )
+    private int render(FontRenderer instance, String text, float x, float y, int color, Operation<Integer> original) {
+        if (!BetterChat.getSettings().head) return original.call(instance, text, x, y, color);
+        NetworkPlayerInfo owner = ((ChatLineAccessor) this.betterChat$drawingLine).chatheads$getSender();
+        if (owner != null) {
+            GlStateManager.color(1, 1, 1, (((color >> 24) + 256) % 256) / 255f);
+            this.mc.getTextureManager().bindTexture(owner.getLocationSkin());
+            // draw base layer
+            Gui.drawScaledCustomSizeModalRect((int) x, (int) y, 8.0F, 8, 8, 8, 8, 8, 64, 64);
+            // draw hat
+            Gui.drawScaledCustomSizeModalRect((int) x, (int) y, 40.0F, 8, 8, 8, 8, 8, 64, 64);
+            GlStateManager.color(1, 1, 1, 1);
+        }
+        return original.call(instance, text, x + BetterChat.HEAD_OFFSET, y, color);
+    }
+
+    @WrapMethod(method = "getChatWidth")
+    private int modifyChatWidth(@Nonnull Operation<Integer> original) {
+        return BetterChat.getSettings().head ? original.call() + BetterChat.HEAD_OFFSET : original.call();
     }
 }

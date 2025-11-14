@@ -8,6 +8,8 @@
   "mixins": [],
   "server": [],
   "client": [
-    "GuiNewChatMixin"
+    "ChatLineMixin",
+    "GuiNewChatMixin",
+    "MinecraftMixin"
   ]
 }

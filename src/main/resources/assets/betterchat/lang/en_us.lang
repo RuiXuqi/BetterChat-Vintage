@@ -12,3 +12,7 @@ gui.betterchat.text.reset.name=Reset Config
 gui.betterchat.text.example1=Example Chat
 gui.betterchat.text.example2=Testing, testing, 1, 2, 3
 gui.betterchat.text.example3=Players' messages will look like this
+
+gui.betterchat.text.head.name=Chat Head:
+gui.betterchat.text.head.enabled=Enabled
+gui.betterchat.text.head.disabled=Disabled

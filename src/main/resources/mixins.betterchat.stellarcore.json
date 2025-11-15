@@ -1,0 +1,13 @@
+{
+  "package": "com.llamalad7.betterchat.mixin.stellarcore",
+  "required": true,
+  "refmap": "mixins.betterchat.refmap.json",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8.5",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "server": [],
+  "client": [
+    "ClientEventHandlerMixin"
+  ]
+}

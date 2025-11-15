@@ -1,5 +1,6 @@
-package com.llamalad7.betterchat;
+package com.llamalad7.betterchat.mixin;
 
+import com.llamalad7.betterchat.Tags;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import zone.rong.mixinbooter.IEarlyMixinLoader;
 
@@ -10,10 +11,10 @@ import java.util.Map;
 
 @IFMLLoadingPlugin.Name(Tags.MOD_NAME)
 @IFMLLoadingPlugin.MCVersion("1.12.2")
-public class BetterChatPlugin implements IFMLLoadingPlugin, IEarlyMixinLoader {
+public class EarlyMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
     @Override
     public List<String> getMixinConfigs() {
-        return Collections.singletonList("mixins.betterchat.json");
+        return Collections.singletonList("mixins.betterchat.vanilla.json");
     }
 
     @Override

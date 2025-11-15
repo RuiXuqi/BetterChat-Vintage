@@ -1,4 +1,4 @@
-package com.llamalad7.betterchat.mixin;
+package com.llamalad7.betterchat.mixin.vanilla;
 
 import com.llamalad7.betterchat.BetterChat;
 import net.minecraft.client.Minecraft;

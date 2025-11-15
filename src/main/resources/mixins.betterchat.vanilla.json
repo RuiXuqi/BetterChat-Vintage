@@ -1,5 +1,5 @@
 {
-  "package": "com.llamalad7.betterchat.mixin",
+  "package": "com.llamalad7.betterchat.mixin.vanilla",
   "required": true,
   "refmap": "mixins.betterchat.refmap.json",
   "target": "@env(DEFAULT)",

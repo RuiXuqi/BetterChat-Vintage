@@ -75,7 +75,7 @@ public class GuiConfig extends GuiScreen implements GuiSlider.ISlider {
         GlStateManager.popMatrix();
 
         ITextComponent itextcomponent = this.dummyChatGUI.getChatComponent(Mouse.getX(), Mouse.getY());
-        if (itextcomponent != null && itextcomponent.getStyle().getHoverEvent() != null) {
+        if (itextcomponent != null) {
             this.handleComponentHover(itextcomponent, mouseX, mouseY);
         }
     }
@@ -84,7 +84,7 @@ public class GuiConfig extends GuiScreen implements GuiSlider.ISlider {
     public void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         if (mouseButton == 0) {
             int left = settings.xOffset;
-            int right = left + this.dummyChatGUI.getChatWidth() + 4;
+            int right = left + GuiNewChat.calculateChatboxWidth(this.mc.gameSettings.chatWidth) + 4;
             int bottom = 8 + settings.yOffset + new ScaledResolution(this.mc).getScaledHeight() - 48;
             int top = bottom - ((GuiNewChatConfigurer) this.dummyChatGUI).betterChat$getCurrentChatHeight() * 9;
             if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom) {
@@ -128,6 +128,7 @@ public class GuiConfig extends GuiScreen implements GuiSlider.ISlider {
             case 5:
                 settings.head = !settings.head;
                 button.displayString = getPropName("head") + " " + getColoredBool("head", settings.head);
+                this.dummyChatGUI.refreshChat();
                 break;
             case 2:
                 settings.resetConfig();

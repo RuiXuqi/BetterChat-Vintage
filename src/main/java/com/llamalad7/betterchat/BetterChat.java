@@ -10,13 +10,17 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nonnull;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION, clientSideOnly = true, acceptableSaveVersions = "*",
         dependencies = "required-after:mixinbooter@[8.0,)", guiFactory = "com.llamalad7.betterchat.BetterChatConfigGuiFactory"
 )
 @SideOnly(Side.CLIENT)
 public class BetterChat {
-    //public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
+    public static final Logger LOG = LogManager.getLogger(Tags.MOD_NAME);
     public static NetworkPlayerInfo lastSender;
     public static final int HEAD_OFFSET = 10;
 
@@ -26,13 +30,13 @@ public class BetterChat {
     public static long prevMillis = -1;
 
     @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
+    public void preInit(@Nonnull FMLPreInitializationEvent event) {
         settings = new ChatSettings(new Configuration(event.getSuggestedConfigurationFile()));
         settings.loadConfig();
     }
 
     @EventHandler
-    public void init(FMLInitializationEvent event) {
+    public void init(@Nonnull FMLInitializationEvent event) {
         ClientCommandHandler.instance.registerCommand(new CommandConfig());
     }
 

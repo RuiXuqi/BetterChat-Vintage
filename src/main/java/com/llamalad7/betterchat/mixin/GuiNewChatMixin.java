@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
@@ -48,6 +49,7 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
     private boolean betterChat$configuring;
 
     @Override
+    @Unique
     public void betterChat$setConfiguring(boolean configuring) {
         this.betterChat$configuring = configuring;
     }
@@ -118,6 +120,7 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
         this.betterChat$lineCount = l;
     }
 
+    @SuppressWarnings("ParameterCanBeLocal")
     @Redirect(
             method = "drawChat",
             at = @At(
@@ -126,8 +129,10 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
                     ordinal = 0
             )
     )
-    private void removeBackground(int left, int top, int right, int bottom, int color) {
-        if (!BetterChat.getSettings().clear) {
+    private void modifyBackground(int left, int top, int right, int bottom, int color) {
+        ChatSettings settings = BetterChat.getSettings();
+        if (!settings.clear) {
+            right = MathHelper.ceil(GuiNewChat.calculateChatboxWidth(this.mc.gameSettings.chatWidth) / this.getChatScale());
             GuiNewChat.drawRect(left, top, right, bottom, color);
         }
     }
@@ -159,23 +164,6 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
         int i = scaledresolution.getScaleFactor();
         ChatSettings settings = BetterChat.getSettings();
         return original.call(mouseX - (settings.xOffset + (settings.head ? BetterChat.HEAD_OFFSET : 0)) * i, mouseY + settings.yOffset * i);
-    }
-
-    @Override
-    @Unique
-    public void betterChat$setExampleChatLines(@Nonnull List<ITextComponent> exampleChatLines) {
-        for (ITextComponent chatComponent : exampleChatLines) {
-            this.setChatLine(chatComponent, 0, 0, false);
-        }
-    }
-
-    @Unique
-    private int betterChat$lineCount = 0;
-
-    @Override
-    @Unique
-    public int betterChat$getCurrentChatHeight() {
-        return this.betterChat$lineCount;
     }
 
     @Unique
@@ -217,8 +205,50 @@ public abstract class GuiNewChatMixin implements GuiNewChatConfigurer {
         return original.call(instance, text, x + BetterChat.HEAD_OFFSET, y, color);
     }
 
-    @WrapMethod(method = "getChatWidth")
-    private int modifyChatWidth(@Nonnull Operation<Integer> original) {
-        return BetterChat.getSettings().head ? original.call() + BetterChat.HEAD_OFFSET : original.call();
+    @Inject(method = "setChatLine", at = @At("TAIL"))
+    private void resetSender(ITextComponent chatComponent, int chatLineId, int updateCounter, boolean displayOnly, CallbackInfo ci) {
+        BetterChat.lastSender = null;
+    }
+
+    @Inject(
+            method = "refreshChat",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GuiNewChat;setChatLine(Lnet/minecraft/util/text/ITextComponent;IIZ)V"
+            ),
+            locals = LocalCapture.CAPTURE_FAILSOFT
+    )
+    private void catchSenderBeforeRefresh(CallbackInfo ci, int i, ChatLine chatline) {
+        BetterChat.lastSender = ((ChatLineAccessor) chatline).chatheads$getSender();
+    }
+
+    /**
+     * Mixin the method for original wrap methods. Do not use for drawing method directly.
+     */
+    @Inject(
+            method = "getChatWidth",
+            at = @At("RETURN"),
+            cancellable = true
+    )
+    private void modifyChatWidth(CallbackInfoReturnable<Integer> cir) {
+        if (!BetterChat.getSettings().head) return;
+        cir.setReturnValue(cir.getReturnValue() - BetterChat.HEAD_OFFSET);
+    }
+
+    @Override
+    @Unique
+    public void betterChat$setExampleChatLines(@Nonnull List<ITextComponent> exampleChatLines) {
+        for (ITextComponent chatComponent : exampleChatLines) {
+            this.setChatLine(chatComponent, 0, 0, false);
+        }
+    }
+
+    @Unique
+    private int betterChat$lineCount = 0;
+
+    @Override
+    @Unique
+    public int betterChat$getCurrentChatHeight() {
+        return this.betterChat$lineCount;
     }
 }

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.annotation.Nullable;
 
 @Mixin(ChatLine.class)
-public abstract class ChatLineMixin implements ChatLineAccessor {
+public class ChatLineMixin implements ChatLineAccessor {
     @Unique
     @Nullable
     private NetworkPlayerInfo chatheads$sender;
@@ -24,9 +24,14 @@ public abstract class ChatLineMixin implements ChatLineAccessor {
     )
     public void init(CallbackInfo callbackInfo) {
         this.chatheads$sender = BetterChat.lastSender;
-        BetterChat.lastSender = null;
     }
 
+    @Override
+    public void chatheads$setSender(@Nullable NetworkPlayerInfo sender) {
+        this.chatheads$sender = sender;
+    }
+
+    @Nullable
     @Override
     public NetworkPlayerInfo chatheads$getSender() {
         return this.chatheads$sender;

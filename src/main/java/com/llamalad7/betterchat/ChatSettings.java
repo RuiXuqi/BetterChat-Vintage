@@ -7,6 +7,7 @@ import net.minecraftforge.common.config.Property;
 
 public class ChatSettings {
     private final Configuration config;
+    public boolean forceNewSkinCompat;
     public boolean smooth;
     public boolean clear;
     public boolean head;
@@ -51,6 +52,10 @@ public class ChatSettings {
 
     private void updateConfig(boolean load) {
         Property prop;
+
+        prop = config.get("All", "ForceNewSkinCompat", false);
+        if (load) forceNewSkinCompat = prop.getBoolean();
+        else prop.set(forceNewSkinCompat);
 
         prop = config.get("All", "Clear", false);
         if (load) clear = prop.getBoolean();

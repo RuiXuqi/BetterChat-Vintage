@@ -3,7 +3,6 @@ package com.llamalad7.betterchat.mixin.vanilla;
 import com.llamalad7.betterchat.BetterChat;
 import com.llamalad7.betterchat.mixininterface.ChatLineAccessor;
 import net.minecraft.client.gui.ChatLine;
-import net.minecraft.client.network.NetworkPlayerInfo;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,11 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
 
+@SuppressWarnings("UnusedMixin")
 @Mixin(ChatLine.class)
 public class ChatLineMixin implements ChatLineAccessor {
     @Unique
     @Nullable
-    private NetworkPlayerInfo chatheads$sender;
+    private String chatheads$sender;
 
     @Inject(
             at = @At("TAIL"),
@@ -27,13 +27,13 @@ public class ChatLineMixin implements ChatLineAccessor {
     }
 
     @Override
-    public void chatheads$setSender(@Nullable NetworkPlayerInfo sender) {
+    public void chatheads$setSender(@Nullable String sender) {
         this.chatheads$sender = sender;
     }
 
     @Nullable
     @Override
-    public NetworkPlayerInfo chatheads$getSender() {
+    public String chatheads$getSender() {
         return this.chatheads$sender;
     }
 }

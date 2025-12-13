@@ -1,27 +1,36 @@
 package com.llamalad7.betterchat.mixin;
 
-import com.llamalad7.betterchat.Tags;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
-import zone.rong.mixinbooter.IEarlyMixinLoader;
+import com.gtnewhorizon.gtnhmixins.IEarlyMixinLoader;
+import com.gtnewhorizon.gtnhmixins.builders.IMixins;
+import com.llamalad7.betterchat.BetterChat;
+import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-@IFMLLoadingPlugin.Name(Tags.MOD_NAME)
-@IFMLLoadingPlugin.MCVersion("1.12.2")
+@SuppressWarnings("unused")
+@IFMLLoadingPlugin.Name(BetterChat.MOD_NAME)
+@IFMLLoadingPlugin.MCVersion("1.7.10")
 public class EarlyMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
     @Override
-    public List<String> getMixinConfigs() {
-        return Collections.singletonList("mixins.betterchat.vanilla.json");
+    public String getMixinConfig() {
+        return "mixins.betterchat.early.json";
     }
 
+    @Override
+    public List<String> getMixins(Set<String> loadedCoreMods) {
+        return IMixins.getEarlyMixins(Mixins.class, loadedCoreMods);
+    }
+
+    @Nullable
     @Override
     public String[] getASMTransformerClass() {
         return null;
     }
 
+    @Nullable
     @Override
     public String getModContainerClass() {
         return null;
@@ -37,6 +46,7 @@ public class EarlyMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
     public void injectData(Map<String, Object> data) {
     }
 
+    @Nullable
     @Override
     public String getAccessTransformerClass() {
         return null;

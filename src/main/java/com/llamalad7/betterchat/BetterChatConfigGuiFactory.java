@@ -1,10 +1,11 @@
 package com.llamalad7.betterchat;
 
 import com.llamalad7.betterchat.gui.GuiConfig;
+import cpw.mods.fml.client.IModGuiFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.fml.client.IModGuiFactory;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
@@ -15,17 +16,18 @@ public class BetterChatConfigGuiFactory implements IModGuiFactory {
     }
 
     @Override
-    public boolean hasConfigGui() {
-        return true;
-    }
-
-    @Override
-    public GuiScreen createConfigGui(GuiScreen parentScreen) {
-        return new GuiConfig();
+    public Class<? extends GuiScreen> mainConfigGuiClass() {
+        return GuiConfig.class;
     }
 
     @Override
     public Set<RuntimeOptionCategoryElement> runtimeGuiCategories() {
         return Collections.emptySet();
+    }
+
+    @Nullable
+    @Override
+    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element) {
+        return null;
     }
 }

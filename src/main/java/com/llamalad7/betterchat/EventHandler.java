@@ -1,43 +1,32 @@
 package com.llamalad7.betterchat;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiPlayerInfo;
 import net.minecraft.client.network.NetHandlerPlayClient;
-import net.minecraft.client.network.NetworkPlayerInfo;
-import net.minecraft.util.text.ChatType;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nonnull;
+import java.util.List;
+import java.util.Objects;
 
-@Mod.EventBusSubscriber(value = Side.CLIENT, modid = Tags.MOD_ID)
 public class EventHandler {
     @SubscribeEvent
-    public static void onClientChat(@Nonnull ClientChatReceivedEvent event) {
-        NetHandlerPlayClient connection = Minecraft.getMinecraft().getConnection();
+    public void onClientChat(@Nonnull ClientChatReceivedEvent event) {
+        NetHandlerPlayClient connection = Minecraft.getMinecraft().getNetHandler();
         if (connection == null) return;
-        String message = event.getMessage().getUnformattedText();
+        String message = event.message.getUnformattedText();
+        List<GuiPlayerInfo> playerInfos = connection.playerInfoList;
 
-        // For chat
-        if (event.getType() == ChatType.CHAT) {
-            for (String part : message.split("(§.)|[^\\w]")) {
-                if (part.isEmpty()) continue;
-                NetworkPlayerInfo p = connection.getPlayerInfo(part);
-                if (p != null) {
-                    BetterChat.lastSender = p;
-                    return;
-                }
-            }
+        // For chat - try to split first
+        for (String part : message.split("(§.)|[^\\w]")) {
+            if (part.isEmpty()) continue;
+            playerInfos.stream().filter(info -> Objects.equals(info.name, part)).findFirst()
+                .ifPresent(info -> BetterChat.lastSender = info.name);
         }
 
-        // For other messages
-        for (NetworkPlayerInfo p : connection.getPlayerInfoMap()) {
-            String displayName = p.getGameProfile().getName();
-            if (message.contains(displayName)) {
-                BetterChat.lastSender = p;
-                return;
-            }
-        }
+        // For other messages - then try to match any
+        playerInfos.stream().filter(info -> message.contains(info.name)).findFirst()
+            .ifPresent(info -> BetterChat.lastSender = info.name);
     }
 }
